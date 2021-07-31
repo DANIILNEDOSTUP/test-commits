@@ -1,0 +1,69 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: '14'
+    
+    - name: Preparation for build
+      run : npm ci
+    
+    - name: Build 
+      run: npm run build
+    
+    - name: Tests
+      run: npm test  
+    
+    - name: Copy important files
+      run: |
+        cp ./src/index.html ./
+        cp ./src/style.css ./
+        cp ./src/arithmetics.js ./
+        cp ./dist/scripts.js ./
+        rm -R ./node_modules
+        
+    - name: Build Docker image
+      run : docker build -t daniilnedostup/webapp:latest . 
+    
+    - name: Check image
+      run : docker images
+    
+    - name: Push in DockerHub
+      run : |
+            docker login -u ${{ secrets.DOCKERHUB_LOGIN }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
+            docker tag daniilnedostup/webapp:latest daniilnedostup/webapp:${{ github.sha }}
+            docker push daniilnedostup/webapp:${{ github.sha }}
+            docker push daniilnedostup/webapp:latest
+     
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-central-1
+     
+    - name: Deploy
+      run : |
+            zip -r deployment-${{ github.sha }}.zip .
+            aws s3 cp deployment-${{ github.sha }}.zip s3://github-webapp-actions
+            aws elasticbeanstalk create-application-version --application-name js-app \
+                --version-label ${{ github.sha }} --source-bundle S3Bucket="github-webapp-actions",S3Key="deployment-${{ github.sha }}.zip"
+            aws elasticbeanstalk update-environment --application-name js-app \
+                --environment-name stage --version-label ${{ github.sha }}
+   
