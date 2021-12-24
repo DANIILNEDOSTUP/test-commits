@@ -40,4 +40,4 @@ This project is an assignment from [TheOdinProject](https://www.theodinproject.c
 
 ## Contact
 
-Created by [@AlejandroVela](https://github.com/AlejandroVela-Dev) - feel free to contact me!
+Created by [@AlejandroVela](https://github.com/AlejandroVela-Dev) - feel free to contact me!!
