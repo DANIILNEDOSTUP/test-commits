@@ -32,7 +32,7 @@ https://alejandrovela-dev.github.io/js-calculator/
 - Floating point numbers support
 - Backspace button
 - Responsive design
-- Keyboard support
+- Keyboard support!!!
 
 ## Credits
 
